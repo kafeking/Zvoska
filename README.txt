@@ -32,3 +32,10 @@ VERZE V4
 - samostatná ikona Hledat ve spodní navigaci
 - rychlá vyhledávací obrazovka
 - stručné zaměření u všech 83 vystavovatelů podle veřejně dostupných informací
+
+
+VERZE V5:
+- mapy mají 3× vyšší pixelové rozlišení (PNG)
+- výchozí zoom mapy je 100 %
+- minimální zoom mapy je 100 %
+- přiblížení zůstává až do 265 %

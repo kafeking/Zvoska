@@ -178,9 +178,9 @@
   exhibitors.forEach(e => { e.description = exhibitorDescriptions[e.id] || ''; });
 
   const floors = {
-    ground:{label:'Přízemí',range:'1–9',map:'map-prizemi.jpg'},
-    first:{label:'1. patro',range:'10–40',map:'map-1patro.jpg'},
-    second:{label:'2. patro',range:'41–83',map:'map-2patro.jpg'}
+    ground:{label:'Přízemí',range:'1–9',map:'map-prizemi.png'},
+    first:{label:'1. patro',range:'10–40',map:'map-1patro.png'},
+    second:{label:'2. patro',range:'41–83',map:'map-2patro.png'}
   };
 
 
@@ -206,7 +206,7 @@
     }}
   };
 
-  let mapZoom = 1.65;
+  let mapZoom = 1.00;
 
   let state = loadState();
   let route = {view:'home', floor:'ground', filter:'all', search:'', id:null};
@@ -402,7 +402,7 @@
   }
 
   function changeMapZoom(delta){
-    mapZoom=Math.max(1.45,Math.min(2.65,Math.round((mapZoom+delta)*100)/100));
+    mapZoom=Math.max(1.00,Math.min(2.65,Math.round((mapZoom+delta)*100)/100));
     render();
   }
 
@@ -419,7 +419,7 @@
       bindInteractiveMap(body);
     };
     wrap.querySelector('[data-full-zoom-in]').onclick=()=>{mapZoom=Math.min(2.65,Math.round((mapZoom+.25)*100)/100);rerender()};
-    wrap.querySelector('[data-full-zoom-out]').onclick=()=>{mapZoom=Math.max(1.45,Math.round((mapZoom-.25)*100)/100);rerender()};
+    wrap.querySelector('[data-full-zoom-out]').onclick=()=>{mapZoom=Math.max(1.00,Math.round((mapZoom-.25)*100)/100);rerender()};
     wrap.querySelector('.fullscreen-close').onclick=()=>wrap.remove();
     bindInteractiveMap(body);
   }
