@@ -39,3 +39,5 @@ VERZE V5:
 - výchozí zoom mapy je 100 %
 - minimální zoom mapy je 100 %
 - přiblížení zůstává až do 265 %
+
+V6: Mapu lze zvětšovat i gestem dvěma prsty (pinch-to-zoom), vedle tlačítek +/−. Rozsah zůstává 100–265 %.

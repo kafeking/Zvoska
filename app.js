@@ -286,7 +286,7 @@
     return `<main class="app-shell">${topbar(f.label,`Stánky ${f.range}`)}<section class="section">
       <div class="floor-tabs">${Object.entries(floors).map(([k,v])=>`<button class="chip ${route.floor===k?'active':''}" data-map-floor="${k}">${v.label}</button>`).join('')}</div>
       <div class="map-card interactive" style="margin-top:12px">
-        <div class="map-tools"><div><strong>Klikni na číslo stánku</strong><span> · mapu posouvej prstem</span></div><div class="zoom-tools"><button data-zoom-out aria-label="Oddálit mapu">−</button><span>${Math.round(mapZoom*100)} %</span><button data-zoom-in aria-label="Přiblížit mapu">+</button></div></div>
+        <div class="map-tools"><div><strong>Klikni na číslo stánku</strong><span> · posun jedním prstem, zoom dvěma</span></div><div class="zoom-tools"><button data-zoom-out aria-label="Oddálit mapu">−</button><span>${Math.round(mapZoom*100)} %</span><button data-zoom-in aria-label="Přiblížit mapu">+</button></div></div>
         ${mapStageHtml(route.floor)}
         <button class="map-expand" data-expand-map aria-label="Mapa přes celou obrazovku">⛶</button>
       </div>
@@ -385,6 +385,12 @@
 
   function bindInteractiveMap(root){
     root.querySelectorAll('[data-map-booth]').forEach(b=>b.onclick=e=>{
+      const vp=b.closest('[data-map-viewport]');
+      if(vp && vp._suppressMapClickUntil && Date.now()<vp._suppressMapClickUntil){
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
       e.stopPropagation();
       navigate('detail',{id:Number(b.dataset.mapBooth),backView:'map',backFloor:route.floor});
     });
@@ -392,17 +398,89 @@
     if(zin)zin.onclick=()=>changeMapZoom(.25);
     if(zout)zout.onclick=()=>changeMapZoom(-.25);
     const vp=root.querySelector('[data-map-viewport]');
-    if(vp && !vp.dataset.centered){
-      vp.dataset.centered='1';
-      requestAnimationFrame(()=>{
-        vp.scrollLeft=Math.max(0,(vp.scrollWidth-vp.clientWidth)/2);
-        vp.scrollTop=Math.max(0,(vp.scrollHeight-vp.clientHeight)/2);
-      });
+    if(vp){
+      enablePinchZoom(vp);
+      if(!vp.dataset.centered){
+        vp.dataset.centered='1';
+        requestAnimationFrame(()=>{
+          vp.scrollLeft=Math.max(0,(vp.scrollWidth-vp.clientWidth)/2);
+          vp.scrollTop=Math.max(0,(vp.scrollHeight-vp.clientHeight)/2);
+        });
+      }
     }
   }
 
+  function clampMapZoom(value){
+    return Math.max(1.00,Math.min(2.65,Math.round(value*100)/100));
+  }
+
+  function updateMapZoomLabels(){
+    document.querySelectorAll('.zoom-tools > span').forEach(el=>{
+      el.textContent=`${Math.round(mapZoom*100)} %`;
+    });
+  }
+
+  function enablePinchZoom(vp){
+    if(vp.dataset.pinchBound==='1')return;
+    vp.dataset.pinchBound='1';
+    const stage=vp.querySelector('[data-map-stage]');
+    if(!stage)return;
+
+    let pinch=null;
+    const distance=(a,b)=>Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+    const midpoint=(a,b)=>({x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2});
+
+    vp.addEventListener('touchstart',e=>{
+      if(e.touches.length!==2)return;
+      if(e.cancelable)e.preventDefault();
+      const rect=vp.getBoundingClientRect();
+      const mid=midpoint(e.touches[0],e.touches[1]);
+      const stageWidth=stage.getBoundingClientRect().width;
+      const stageHeight=stage.getBoundingClientRect().height;
+      pinch={
+        startDistance:Math.max(1,distance(e.touches[0],e.touches[1])),
+        startZoom:mapZoom,
+        contentX:vp.scrollLeft+(mid.x-rect.left),
+        contentY:vp.scrollTop+(mid.y-rect.top),
+        normX:stageWidth?((vp.scrollLeft+(mid.x-rect.left))/stageWidth):.5,
+        normY:stageHeight?((vp.scrollTop+(mid.y-rect.top))/stageHeight):.5
+      };
+      vp._suppressMapClickUntil=Date.now()+450;
+    },{passive:false});
+
+    vp.addEventListener('touchmove',e=>{
+      if(!pinch || e.touches.length!==2)return;
+      if(e.cancelable)e.preventDefault();
+      const rect=vp.getBoundingClientRect();
+      const mid=midpoint(e.touches[0],e.touches[1]);
+      const scale=distance(e.touches[0],e.touches[1])/pinch.startDistance;
+      mapZoom=clampMapZoom(pinch.startZoom*scale);
+      const floorData=mapSpots[route.floor];
+      stage.style.width=`${Math.round(floorData.w*mapZoom)}px`;
+
+      // Udrž bod mezi prsty na stejném místě, aby zoom působil přirozeně.
+      const newStageRect=stage.getBoundingClientRect();
+      const fingerX=mid.x-rect.left;
+      const fingerY=mid.y-rect.top;
+      vp.scrollLeft=Math.max(0,pinch.normX*newStageRect.width-fingerX);
+      vp.scrollTop=Math.max(0,pinch.normY*newStageRect.height-fingerY);
+      updateMapZoomLabels();
+      vp._suppressMapClickUntil=Date.now()+450;
+    },{passive:false});
+
+    const endPinch=e=>{
+      if(!pinch)return;
+      if(e.touches && e.touches.length>=2)return;
+      pinch=null;
+      vp._suppressMapClickUntil=Date.now()+350;
+      updateMapZoomLabels();
+    };
+    vp.addEventListener('touchend',endPinch,{passive:true});
+    vp.addEventListener('touchcancel',endPinch,{passive:true});
+  }
+
   function changeMapZoom(delta){
-    mapZoom=Math.max(1.00,Math.min(2.65,Math.round((mapZoom+delta)*100)/100));
+    mapZoom=clampMapZoom(mapZoom+delta);
     render();
   }
 
@@ -410,7 +488,7 @@
     const f=floors[route.floor];
     const wrap=document.createElement('div');
     wrap.className='fullscreen';
-    wrap.innerHTML=`<div class="fullscreen-head"><span>${esc(f.label)} · klikni na číslo stánku</span><div class="fullscreen-actions"><div class="zoom-tools dark"><button data-full-zoom-out aria-label="Oddálit">−</button><span data-full-zoom-label>${Math.round(mapZoom*100)} %</span><button data-full-zoom-in aria-label="Přiblížit">+</button></div><button class="fullscreen-close" aria-label="Zavřít">×</button></div></div><div class="fullscreen-body" data-full-body>${mapStageHtml(route.floor,true)}</div>`;
+    wrap.innerHTML=`<div class="fullscreen-head"><span>${esc(f.label)} · posun jedním prstem, zoom dvěma</span><div class="fullscreen-actions"><div class="zoom-tools dark"><button data-full-zoom-out aria-label="Oddálit">−</button><span data-full-zoom-label>${Math.round(mapZoom*100)} %</span><button data-full-zoom-in aria-label="Přiblížit">+</button></div><button class="fullscreen-close" aria-label="Zavřít">×</button></div></div><div class="fullscreen-body" data-full-body>${mapStageHtml(route.floor,true)}</div>`;
     document.body.appendChild(wrap);
     const body=wrap.querySelector('[data-full-body]');
     const rerender=()=>{
