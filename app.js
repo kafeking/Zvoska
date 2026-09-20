@@ -91,9 +91,9 @@
   ];
 
   const floors = {
-    ground:{label:'Přízemí',range:'1–9',map:'assets/map-prizemi.jpg'},
-    first:{label:'1. patro',range:'10–40',map:'assets/map-1patro.jpg'},
-    second:{label:'2. patro',range:'41–83',map:'assets/map-2patro.jpg'}
+    ground:{label:'Přízemí',range:'1–9',map:'map-prizemi.jpg'},
+    first:{label:'1. patro',range:'10–40',map:'map-1patro.jpg'},
+    second:{label:'2. patro',range:'41–83',map:'map-2patro.jpg'}
   };
 
   let state = loadState();
