@@ -19,3 +19,16 @@ Doporučené bezplatné nasazení:
 - Vercel
 
 Před zveřejněním doporučujeme ručně zkontrolovat přepis názvů vystavovatelů proti oficiálnímu seznamu, protože zdrojem byly fotografie plánků.
+
+
+VERZE 3:
+- mapy jsou přiblížené a posuvné prstem
+- všechna čísla stánků 1–83 mají velké klikací body
+- klepnutí na číslo otevře detail vystavovatele
+- zelený bod = navštíveno
+- zoom +/- a celoobrazovková interaktivní mapa
+
+VERZE V4
+- samostatná ikona Hledat ve spodní navigaci
+- rychlá vyhledávací obrazovka
+- stručné zaměření u všech 83 vystavovatelů podle veřejně dostupných informací
